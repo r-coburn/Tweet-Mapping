@@ -23,18 +23,18 @@ library(tmap)
 library(tmaptools)
 library(leaflet)
 
-appname <- "Riley's App #1"
+appname <- "YOUR APP NAME"
 
-key <- "NtD5nbbweT3MNPmwKvsT5GIYs"
+key <- "YOUR DEV KEY"
 
-secret <- "r6pPTv2CPtkDrQY6f96bErcJYHMtixdESYveazDzQwC5Vm8QXX"
+secret <- "YOUR DEV SECRET"
 
 twitter_token <- create_token(
   app = appname,
   consumer_key = key,
   consumer_secret = secret,
-  access_token = "1096114352623620096-V8bZMCMPyMAIBcN97Lud1zyXo5WbaX",
-  access_secret = "ACVKTorTnNQvqxhQ8Il7fM32vdUX0YVjezQJgS7hpkH2N")
+  access_token = "YOUR ACCESS TOKEN"
+  access_secret = "YOUR ACCESS SECRET")
 ```
 
 ```{r}
