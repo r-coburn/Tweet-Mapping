@@ -1,0 +1,87 @@
+---
+title: "Function"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages("remotes")
+remotes::install_github("JVAdams/jvamisc")
+library(usmap)
+library(jvamisc)
+library(rtweet)
+library(dplyr)
+library(tidytext)
+library(tibble)
+library(viridis)
+library(sf)
+library(ggplot2)
+library(tmap)
+library(tmaptools)
+library(leaflet)
+
+appname <- "Riley's App #1"
+
+key <- "NtD5nbbweT3MNPmwKvsT5GIYs"
+
+secret <- "r6pPTv2CPtkDrQY6f96bErcJYHMtixdESYveazDzQwC5Vm8QXX"
+
+twitter_token <- create_token(
+  app = appname,
+  consumer_key = key,
+  consumer_secret = secret,
+  access_token = "1096114352623620096-V8bZMCMPyMAIBcN97Lud1zyXo5WbaX",
+  access_secret = "ACVKTorTnNQvqxhQ8Il7fM32vdUX0YVjezQJgS7hpkH2N")
+```
+
+```{r}
+number_by_keyword <- function(keyword, n) {
+
+  tweets <- search_tweets(keyword, geocode = lookup_coords('usa'), n = n, retryonratelimit = TRUE, include_rts = FALSE, token = twitter_token)
+  
+tweets <- lat_lng(tweets)
+
+tweets <- tweets %>% filter(!is.na(lat)) 
+
+lat_long_points <- data.frame(x = c(tweets$lng), y = c(tweets$lat), z = c('a'))
+
+tweets <- tweets %>%
+  mutate(state = latlong2(lat_long_points, to='state'))
+
+counts <- tweets %>%
+  group_by(state) %>%
+  summarise("# of Tweets" = n())
+
+mymap <- st_read("downloads/cb_2018_us_state_500k/cb_2018_us_state_500k.shp", stringsAsFactors = FALSE)
+
+mymap <- mymap %>%
+  rename(state = "NAME")
+
+mymap$state = tolower(mymap$state)
+
+num_map_and_data <- left_join(mymap, counts)
+
+num_map_and_data <- num_map_and_data %>%
+  filter(!((STUSPS == 'MP' | STUSPS == 'GU' | STUSPS == 'AS' | STUSPS == 'VI' | STUSPS == 'AK' | STUSPS == 'HI' | STUSPS == 'PR')))
+
+num_map_and_data[is.na(num_map_and_data)] <- 0
+
+CapStr <- function(y) {
+  c <- strsplit(y, " ")[[1]]
+  paste(toupper(substring(c, 1,1)), substring(c, 2),
+      sep="", collapse=" ")
+}
+
+for (i in 1:length(num_map_and_data$state)) {
+num_map_and_data$state[i] <- CapStr(num_map_and_data$state[i])
+}
+
+tm_shape(num_map_and_data) + 
+  tm_polygons('# of Tweets', style ="cont", palette = "seq", id = 'state', alpha = 0.95, contrast = .7) +
+  tm_layout(title = paste(paste('How many times has', keyword), 'been Tweeted in each state?'), aes.palette = list(seq = "Blues"))
+
+}
+```
